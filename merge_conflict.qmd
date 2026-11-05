@@ -4,3 +4,4 @@ format: html
 ---
 
 hello we would like to create a merge conflict
+this is adam's side of the merge conflict (don't tell alex)
