@@ -1,6 +1,0 @@
----
-title: "Work Doc"
-format: html
----
-
-
