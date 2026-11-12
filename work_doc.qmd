@@ -1,6 +1,8 @@
 ---
 title: "Main Work Dox"
 format: html
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r}
@@ -15,10 +17,19 @@ library(jsonlite)
 ```
 https://github.com/toddmotto/public-apis
 ```{r}
+# Alex's API Key & ID
 steam_api_key <- Sys.getenv("6431787D94B64F0CB998C43BA9E66C54")
 "6431787D94B64F0CB998C43BA9E66C54" #API Key
 steam_id <- "76561199875296546" #Steam id
+```
 
+```{r}
+# Adam's API Key & ID
+steam_api_key <- Sys.getenv("")
+steam_id <- 
+```
+
+```{r}
 response <- GET(
   "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/",
   query = list(
