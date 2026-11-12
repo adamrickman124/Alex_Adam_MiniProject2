@@ -38,7 +38,7 @@ json_text
 raw_data <- fromJSON(json_text, flatten = TRUE)
 
 # List of Games to grab
-appids <- c(730, 570, 440)
+appids <- c(730, 570, 440) #(CS2, Dota 2, Team Fortress 2)
 
 # Finds the current number of players in the games listed in appids
 get_player_count <- function(appid) {
