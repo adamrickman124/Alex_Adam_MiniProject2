@@ -84,6 +84,44 @@ get_store_details <- function(appid, currency = "us", language = "english") {
     data <- fromJSON(content(resp, "text", encoding = "UTF-8"))
     data
 }
-get_store_details(4435490)
+cod <- get_store_details(4435490)
+cod
+
+as.character(cod$`4435490`$data$name)
+
+ultrakill <- get_store_details("1229490")
+ultrakill
+```
+
+```{r}
+game_data <- tibble(name = character(),
+                    app_id = character(),
+                    description = character(),
+                    developers = character(),
+                    publishers = character(),
+                    price_usd = numeric(),
+                    release = as.Date(character()),
+                    esrb_rating = character()
+                    )
+
+app_vec = c("4435490", "960090", "632360", "1229490", "413150", "620", "2679460") # for some reason, only specific games from this list appear in the final game_data
+# the first, third, fifth, and seventh games appear, which makes me wonder if the for loop is cycling through games too fast, and if a buffer should be added.
+
+#UPDATE: It wasn't the buffer - tested with Sys.sleep and the same games are appearing
+
+for (temp_app_id in app_vec) {
+    temp_store_data = get_store_details(temp_app_id)
+    game_data <- add_row(game_data,
+            name = temp_store_data[[as.character(temp_app_id)]]$data$name,
+            app_id = as.character(temp_store_data[[as.character(temp_app_id)]]$data$steam_appid),
+            description = as.character(temp_store_data[[as.character(temp_app_id)]]$data$short_description),
+            developers = toString(temp_store_data[[as.character(temp_app_id)]]$data$developers),
+            publishers = toString(temp_store_data[[as.character(temp_app_id)]]$data$publishers),
+            price_usd = parse_number(temp_store_data[[as.character(temp_app_id)]]$data$price_overview$final_formatted),
+            release = mdy(temp_store_data[[as.character(temp_app_id)]]$data$release_date$date),
+            esrb_rating = as.character(temp_store_data[[as.character(temp_app_id)]]$data$ratings$esrb$rating)
+           )
+}
+game_data
 ```
 
