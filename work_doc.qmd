@@ -18,7 +18,7 @@ https://github.com/toddmotto/public-apis
 steam_api_key <- Sys.getenv("6431787D94B64F0CB998C43BA9E66C54")
 "6431787D94B64F0CB998C43BA9E66C54" #API Key
 steam_id <- "76561199875296546" #Steam id
-store.steampowered.com/api/appdetails
+
 response <- GET(
   "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/",
   query = list(
@@ -37,8 +37,10 @@ json_text
 
 raw_data <- fromJSON(json_text, flatten = TRUE)
 
-
+# List of Games to grab
 appids <- c(730, 570, 440)
+
+# Finds the current number of players in the games listed in appids
 get_player_count <- function(appid) {
   r <- GET(
     "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/",
@@ -47,12 +49,21 @@ get_player_count <- function(appid) {
   stop_for_status(r)
   fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
 }
+
 counts <- tibble(appid = appids) |>
   mutate(players = sapply(appid, function(id) {
     Sys.sleep(1)
     get_player_count(id)
   }))
 
-counts
+get_global_stats <- function(appid) {
+  r <- GET(
+    "https://api.steampowered.com/ISteamUserStats/GetGlobalStatsForGame/v1/",
+    query = list(appid = appid)
+  )
+  stop_for_status(r)
+  fromJSON(content(r, "text", encoding = "UTF-8"))$response$global_stat
+}
+
 ```
 
