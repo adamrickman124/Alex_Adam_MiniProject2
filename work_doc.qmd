@@ -56,10 +56,17 @@ counts <- tibble(appid = appids) |>
     get_player_count(id)
   }))
 
-get_global_stats <- function(appid) {
+count
+
+
+
+get_global_stats <- function(appid, cur, language) {
   r <- GET(
     "https://api.steampowered.com/ISteamUserStats/GetGlobalStatsForGame/v1/",
-    query = list(appid = appid)
+    query = list(
+      appid = appid, 
+      cc = currency,
+      l = language)
   )
   stop_for_status(r)
   fromJSON(content(r, "text", encoding = "UTF-8"))$response$global_stat
