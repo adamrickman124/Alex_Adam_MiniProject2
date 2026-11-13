@@ -25,8 +25,9 @@ https://github.com/toddmotto/public-apis
 
 ```{r}
 # Alex's API Key & ID
-steam_api_key <- "6431787D94B64F0CB998C43BA9E66C54"
+steam_api_key_alex <- Sys.getenv("6431787D94B64F0CB998C43BA9E66C54")
 
+# Alex's Steam account ID
 steam_id <- "76561199875296546" #Steam id
 ```
 
@@ -56,9 +57,10 @@ steam_id <-
 #count
 
 
-# Gets details about the game
+# Gets details about a game based on its App ID
 get_store_details <- function(appid, currency = "us", language = "english") {
-    url <- "https://store.steampowered.com/api/appdetails"
+    url <- "https://store.steampowered.com/api/appdetails" # Endpoint url
+    # Request the details about a game, and choose the language and currency to have the data displayed in (defaulted to USD and english)
     resp <- GET(
       url, 
       query = list(
@@ -66,28 +68,24 @@ get_store_details <- function(appid, currency = "us", language = "english") {
       cc = currency,
       l = language)
     )
-    stop_for_status(resp)
-    data <- fromJSON(content(resp, "text", encoding = "UTF-8"))
+    stop_for_status(resp) # Check if request worked: if good, then nothing happens; if failed, then stops and outputs the error
+    data <- fromJSON(content(resp, "text", encoding = "UTF-8")) # Converts the API response into a usable list
     data
 }
 
-get_store_details(1222670)
-get_store_details(4435490)$`4435490`$data$price_overview$final_formatted
 
-
-# Uses Steamspy to grab the 100 most played games on Steam
+# Uses Steamspy to grab more details about games, including their App ID, which we can use to make a list of many App IDs to loop through the for loop below.
 get_steamspy <- function(request) {
   resp <- GET("https://steamspy.com/api.php",
-  query = list(
-    request = request
-    )
+  query = list(request = request) # We can request games that fall under a certain category, e.g. most popular, those with a certain genre, etc.
   )
   stop_for_status(resp)
   games <- fromJSON(content(resp, "text", encoding = "UTF-8"))
+  # Go through each game and grab the game info we want from the list Steamspy gives us. Then form a tibble from that data.
   rows <- lapply(games, function(x) {
     tibble(appid = as.character(x$appid),
            name = x$name,
-           price = (as.double(x$price))/100, 
+           price = (as.double(x$price))/100,
            developer = x$developer,
            publisher = x$publisher,
            avg_playtime_forever = x$average_forever,
@@ -97,32 +95,42 @@ get_steamspy <- function(request) {
   steam_tib
 }
 
-top_forever <- get_steamspy("top100forever")
-top_current <- get_steamspy("top100in2weeks")
-top_owned <- get_steamspy("top100owned")
-
-top_games_df <- bind_rows(top_forever, top_current) |>
-  distinct(appid, .keep_all = TRUE)
-
-all_top_games <- bind_rows(top_games_df, top_owned) |>
-  distinct(appid, .keep_all = TRUE) |>
+games_dataset <- get_steamspy("all") |>
   rename("app_id" = "appid")
+app_id_list_main <- as.list(games_dataset$app_id)
 
-# List of app ids to usse
-app_id_list <- as.list(final_df$app_id)
+---------------------------------------------------------------------------------------------------------------------
+# Steamspy.com is not relaying the correct information for the following tibbles. All three tibbles are the exact same but should be different. Keep them here in case Steamspy.com updates them and they become accurate.
+#top_forever <- get_steamspy("top100forever")
+#top_current <- get_steamspy("top100in2weeks")
+#top_owned <- get_steamspy("top100owned")
 
+# Bind together the top_... tibbles to create one tibble with the most popular games on Steam.
+# Currently, all three tibbles are the same, so binding them doesn't change the tibbles.
+#top_games_df <- bind_rows(top_forever, top_current) |>
+#  distinct(appid, .keep_all = TRUE)
+#all_top_games <- bind_rows(top_games_df, top_owned) |>
+#  distinct(appid, .keep_all = TRUE) |>
+#  rename("app_id" = "appid")
 
-# Empty tibble to add data to
+# List of app ids for the most popular games listed above.
+# To run in the for loop below if Steamspy.com gets the popular games info working.
+#app_id_list_pop <- as.list(final_df$app_id)
+---------------------------------------------------------------------------------------------------------------------
+
+# Empty tibble to add data to from the for loop.
 game_data <- tibble(app_id = character(),
                     release = as.Date(character()),
                     metacritic = character(),
                     description = character()
                     )
 
-# For loop to grab game data from each game in the app id list
-for (temp_app_id in app_id_list_big) {
-    Sys.sleep(1.5)
+# For loop to grab game data from each game in the app id list.
+# Not every game has this data available, so some games have NAs for these variables.
+for (temp_app_id in app_id_list_main) {
+    Sys.sleep(1.5) # 200 requests allowed every 5 minutes, so this sends a request every 1.5 seconds, takes 25 minutes to run.
     temp_store_data = get_store_details(temp_app_id)
+    # Add data to game_data tibble
     game_data <- add_row(game_data,
             app_id = as.character(temp_store_data[[as.character(temp_app_id)]]$data$steam_appid),
             release = mdy(temp_store_data[[as.character(temp_app_id)]]$data$release_date$date),
@@ -133,20 +141,15 @@ for (temp_app_id in app_id_list_big) {
 game_data
 
 # Final tibble
+# Join data from Steamspy.com with the data from Steam.
 final_df <- big_dataset |>
   left_join(game_data, by = "app_id")
 
+# Final csv file
 write_csv(final_df, "mp2_final_df.csv")
 ```
 
 
-```{r}
-big_dataset <- get_steamspy("all") |>
-  rename("app_id" = "appid")
-app_id_list_big <- as.list(big_dataset$app_id)
-```
-
-<<<<<<< HEAD
 ```{r}
 robotstxt::paths_allowed("https://steamdb.info/app/227300/")
 
@@ -184,8 +187,6 @@ top_sellers <- steam_data$top_sellers$items
 head(top_sellers)
 ```
 
-=======
->>>>>>> 8fd10159226de0ea7c93ddb6ea1f28a07c584854
 ### APP ID TIBBLE
 
 ```{r}
