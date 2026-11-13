@@ -33,22 +33,22 @@ steam_id <-
 
 ```{r}
 # Finds the current number of players in the games listed in appids
-get_player_count <- function(appid) {
-  r <- GET(
-    "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/",
-    query = list(appid = appid)
-  )
-  stop_for_status(r)
-  fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
-}
+#get_player_count <- function(appid) {
+#  r <- GET(
+#    "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/",
+#    query = list(appid = appid)
+#  )
+#  stop_for_status(r)
+#  fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
+#}
 
-counts <- tibble(appid = ap) |>
-  mutate(players = sapply(appid, function(id) {
-    Sys.sleep(1)
-    get_player_count(id)
-  }))
+#counts <- tibble(appid = appid) |>
+#  mutate(players = sapply(appid, function(id) {
+#    Sys.sleep(1)
+#    get_player_count(id)
+#  }))
 
-count
+#count
 
 
 # Gets details about the game
@@ -86,7 +86,8 @@ get_steamspy <- function(request) {
            developer = x$developer,
            publisher = x$publisher,
            avg_playtime_forever = x$average_forever,
-           avg_playtime_2weeks = x$average_2weeks)
+           avg_playtime_2weeks = x$average_2weeks,
+           num_players = x$ccu)
   })
   steam_tib <- bind_rows(rows)
   steam_tib
@@ -96,10 +97,10 @@ top_forever <- get_steamspy("top100forever")
 top_current <- get_steamspy("top100in2weeks")
 top_owned <- get_steamspy("top100owned")
 
-final_df <- bind_rows(top_forever, top_current) |>
+top_games_df <- bind_rows(top_forever, top_current) |>
   distinct(appid, .keep_all = TRUE)
 
-final_df <- bind_rows(final_df, top_owned) |>
+all_top_games <- bind_rows(top_games_df, top_owned) |>
   distinct(appid, .keep_all = TRUE) |>
   rename("app_id" = "appid")
 
@@ -128,8 +129,10 @@ for (temp_app_id in app_id_list_big) {
 game_data
 
 # Final tibble
-final_df <- final_df |>
+final_df <- big_dataset |>
   left_join(game_data, by = "app_id")
+
+write_csv(final_df, "mp2_final_df.csv")
 ```
 
 
