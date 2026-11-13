@@ -92,6 +92,27 @@ as.character(cod$`4435490`$data$name)
 
 ultrakill <- get_store_details("1229490")
 ultrakill
+
+app_vec = c("960090", "632360", "1229490", "413150", "620", "2679460")
+```
+
+```{r}
+# APP ID TIBBLE!!!!
+all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
+               query = list(
+                 key = steam_api_key,
+                 include_games = TRUE,
+                 include_dlc = FALSE,
+                 include_software = FALSE,
+                 max_results = 50000
+               )
+              )
+stop_for_status(all_ids)
+apps_codes <- fromJSON(content(all_ids, "text", encoding = "UTF-8"))
+
+steam_apps <- as_tibble(apps_codes$response$apps)
+
+app_vec <- as.character(steam_apps$appid)
 ```
 
 ```{r}
@@ -104,13 +125,15 @@ game_data <- tibble(name = character(),
                     release = as.Date(character()),
                     esrb_rating = character()
                     )
-
-app_vec = c("4435490", "960090", "632360", "1229490", "413150", "620", "2679460") # for some reason, only specific games from this list appear in the final game_data
-# the first, third, fifth, and seventh games appear, which makes me wonder if the for loop is cycling through games too fast, and if a buffer should be added.
+# for some reason, only specific games from this list appear in the final game_data
+# the second, fourth, and sixth games appear, which makes me wonder if the for loop is cycling through games too fast, and if a buffer should be added.
+# not an issue with get_store_details because the omitted games can be read on their own
 
 #UPDATE: It wasn't the buffer - tested with Sys.sleep and the same games are appearing
 
-for (temp_app_id in app_vec) {
+test_vec <- app_vec[1:20]
+
+for (temp_app_id in test_vec) {
     temp_store_data = get_store_details(temp_app_id)
     game_data <- add_row(game_data,
             name = temp_store_data[[as.character(temp_app_id)]]$data$name,
