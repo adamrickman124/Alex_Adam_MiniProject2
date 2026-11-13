@@ -21,11 +21,8 @@ library(curl)
 library(tibble)
 ```
 
-<<<<<<< HEAD
 https://github.com/toddmotto/public-apis
 
-=======
->>>>>>> 8fd10159226de0ea7c93ddb6ea1f28a07c584854
 ```{r}
 # Alex's API Key & ID
 steam_api_key <- "6431787D94B64F0CB998C43BA9E66C54"
@@ -76,8 +73,6 @@ get_store_details <- function(appid, currency = "us", language = "english") {
 
 get_store_details(1222670)
 get_store_details(4435490)$`4435490`$data$price_overview$final_formatted
-<<<<<<< HEAD
-=======
 
 
 # Uses Steamspy to grab the 100 most played games on Steam
@@ -142,7 +137,6 @@ final_df <- big_dataset |>
   left_join(game_data, by = "app_id")
 
 write_csv(final_df, "mp2_final_df.csv")
->>>>>>> 8fd10159226de0ea7c93ddb6ea1f28a07c584854
 ```
 
 
