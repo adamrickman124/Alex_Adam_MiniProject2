@@ -22,7 +22,7 @@ release: Release date of the game, YYYY-MM-DD format
 metacritic: Metacritic score the game received
 description: Short description of the game
 
-Our means of data acquisition were ethical and friendly. All of the data we acquired from Steam is public information that anyone can find, such as price, game title, release date, by going to Steam's online web store, which is linked above. In our data acquisition, we looped through 1000 unique App Ids, however, Steam has a limit of 200 requests every 5 minutes, so we included the line `Sys.sleep(1.5)` in our code to accommodate this limit. SteamSpy asks that you limit requests to one per second, which was not a problem for our use of it since we only called it once to get the game details we needed. 
+Our means of data acquisition were ethical and friendly. All of the data we acquired from Steam is public information that anyone can find, such as price, game title, release date, by going to Steam's online web store, which is linked above. In our data acquisition, we looped through 1000 unique App Ids, however, Steam has a limit of 200 requests every 5 minutes, so we included the line `Sys.sleep(1.5)` in our code to accommodate this limit. SteamSpy asks that you limit requests to one per second, which was not a problem for our use of it since we only called it once to get the game details we needed. All of the SteamSpy data we gathered is public information as well, which is all available to view on their website. Overall, none of the data we gathered displays an individual's profile data or any personally identifiable information, and we are using the data for academic purposes.
 ```{r}
 #| include: FALSE
 
