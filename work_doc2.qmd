@@ -163,10 +163,6 @@ all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
 stop_for_status(all_ids)
 apps_codes <- fromJSON(content(all_ids, "text", encoding = "UTF-8"))
 
-more_results <- isTRUE(apps_codes$response$have_more_results)
-if (more_results) {
-  last_appid <- apps_codes$response$last_appid
-}
 steam_apps <- bind_rows(apps_codes)
 ```
 
