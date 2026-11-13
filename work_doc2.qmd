@@ -2,7 +2,10 @@
 title: "work_doc2"
 format: html
 editor: visual
+editor_options: 
+  chunk_output_type: console
 ---
+
 ```{r}
 #| include: FALSE
 
@@ -17,7 +20,9 @@ library(rvest)
 library(curl)
 library(tibble)
 ```
+
 https://github.com/toddmotto/public-apis
+
 ```{r}
 # Alex's API Key & ID
 steam_api_key <- "6431787D94B64F0CB998C43BA9E66C54"
@@ -90,13 +95,6 @@ get_store_details <- function(appid, currency = "us", language = "english") {
 }
 
 get_store_details(4435490)$`4435490`$data$price_overview$final_formatted
-
-
-
-details <- content(coco, "parse")   
-details                         # get a list of 25 pieces of information
-details$Year                    # how to access details
-details[[2]]                    # since a list, another way to access
 ```
 
 ```{r}
@@ -148,7 +146,9 @@ stop_for_status(apps_list_resp)
 top_sellers <- steam_data$top_sellers$items
 head(top_sellers)
 ```
+
 ### APP ID TIBBLE
+
 ```{r}
 # APP ID TIBBLE!!!!
 all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
@@ -165,7 +165,6 @@ apps_codes <- fromJSON(content(all_ids, "text", encoding = "UTF-8"))
 
 steam_apps <- bind_rows(apps_codes)
 ```
-
 
 ```{r}
 #| eval: FALSE
@@ -208,7 +207,6 @@ omdb
 #    different genres, different actors, etc.  But don't need to now.
 ```
 
-
 ## National Park data
 
 A SDS 264 final project by Mary Wu and Jenna Graff started with a small data set on 56 national parks from [kaggle](https://www.kaggle.com/datasets/nationalparkservice/park-biodiversity), and supplemented with columns for the park address (a single column including address, city, state, and zip code) and a list of available activities (a single character column with activities separated by commas) that they acquired using APIs from the park websites themselves.
@@ -231,7 +229,6 @@ park_code <- np_kaggle$`Park Code`
 ```
 
 Notice how far we have to drill down to find addresses and activities!
-
 
 ```{r}
 #| eval: FALSE
@@ -261,8 +258,7 @@ for (j in 2:length(details$data[[1]]$activities)) {
 }
 ```
 
-You can download this .qmd file from [here](https://github.com/proback/264_fall_2026/blob/main/09_table_scraping.qmd).  Just hit the Download Raw File button.
-
+You can download this .qmd file from [here](https://github.com/proback/264_fall_2026/blob/main/09_table_scraping.qmd). Just hit the Download Raw File button.
 
 ```{r}
 #| include: FALSE
@@ -272,16 +268,13 @@ library(rvest)
 library(polite)
 ```
 
-
 # Using rvest for web scraping
 
-If you would like to assemble data from a website with no dedicated user interface (like an API which we'll see later), you can often acquire it using brute force methods commonly called web scraping.  Typically, this involves finding content inside HTML (Hypertext markup language) code used for creating webpages and web applications and the CSS (Cascading style sheets) language for customizing the appearance of webpages. 
-We are used to reading data from .csv files.... but most websites have it stored in XML (like html, but for data). You can read more about it here if you're interested: https://www.w3schools.com/xml/default.asp
+If you would like to assemble data from a website with no dedicated user interface (like an API which we'll see later), you can often acquire it using brute force methods commonly called web scraping. Typically, this involves finding content inside HTML (Hypertext markup language) code used for creating webpages and web applications and the CSS (Cascading style sheets) language for customizing the appearance of webpages. We are used to reading data from .csv files.... but most websites have it stored in XML (like html, but for data). You can read more about it here if you're interested: https://www.w3schools.com/xml/default.asp
 
 XML has a sort of tree or graph-like structure... so we can identify information by which `node` it belongs to (`html_nodes`) and then convert the content into something we can use in R (`html_text` or `html_table`).
 
-
-Here's one quick example of web scraping.  First check out the webpage https://www.cheese.com/by_type and then select Semi-Soft.  We can drill into the html code for this webpage and find and store specific information (like cheese names)
+Here's one quick example of web scraping. First check out the webpage https://www.cheese.com/by_type and then select Semi-Soft. We can drill into the html code for this webpage and find and store specific information (like cheese names)
 
 ```{r}
 session <- bow("https://www.cheese.com/by_type", force = TRUE)
@@ -294,27 +287,24 @@ head(result)
 #[4] "Fontina Val d'Aosta" "Blue Cheese"         "Jarlsberg"   
 ```
 
-
 ## Four steps to scraping data with functions in the `rvest` library:
 
-0. `robotstxt::paths_allowed()` Check if the website allows scraping, and then make sure we scrape "politely"
-1. `read_html()`.  Input the URL containing the data and turn the html code into an XML file (another markup format that's easier to work with).
-2. `html_nodes()`.  Extract specific nodes from the XML file by using the CSS path that leads to the content of interest. (use css="table" for tables.)
-3. `html_text()`.  Extract content of interest from nodes.  Might also use `html_table()` etc.
-
+0.  `robotstxt::paths_allowed()` Check if the website allows scraping, and then make sure we scrape "politely"
+1.  `read_html()`. Input the URL containing the data and turn the html code into an XML file (another markup format that's easier to work with).
+2.  `html_nodes()`. Extract specific nodes from the XML file by using the CSS path that leads to the content of interest. (use css="table" for tables.)
+3.  `html_text()`. Extract content of interest from nodes. Might also use `html_table()` etc.
 
 ## Data scraping ethics
 
-Before scraping, we should always check first whether the website allows scraping.  We should also consider if there's any personal or confidential information, and we should be considerate to not overload the server we're scraping from.
+Before scraping, we should always check first whether the website allows scraping. We should also consider if there's any personal or confidential information, and we should be considerate to not overload the server we're scraping from.
 
-[Chapter 24 in R4DS](https://r4ds.hadley.nz/webscraping#scraping-ethics-and-legalities) provides a nice overview of some of the important issues to consider.  A couple of highlights:
+[Chapter 24 in R4DS](https://r4ds.hadley.nz/webscraping#scraping-ethics-and-legalities) provides a nice overview of some of the important issues to consider. A couple of highlights:
 
 - be aware of terms of service, and, if available, the `robots.txt` file that some websites will publish to clarify what can and cannot be scraped and other constraints about scraping.
 - use the [`polite` package](https://github.com/dmi3kno/polite) to scrape public, non-personal, and factual data in a respectful manner
 - scrape with a good purpose and request only what you need; in particular, be extremely wary of personally identifiable information
 
 See [this article](https://towardsdatascience.com/ethics-in-web-scraping-b96b18136f01) for more perspective on the ethics of data scraping.
-
 
 ## When the data is already in table form:
 
@@ -363,11 +353,9 @@ mpls_data |>
   )
 ```
 
-
-
 ### On Your Own
 
-1. Use the `rvest` package and `html_table` to read in the table of data found at the link [here](https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population) and create a scatterplot of land area versus the 2025 estimated population.  I give you some starter code below; fill in the "???" and be sure you can explain what EVERY line of code does and why it's necessary.
+1.  Use the `rvest` package and `html_table` to read in the table of data found at the link [here](https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population) and create a scatterplot of land area versus the 2025 estimated population. I give you some starter code below; fill in the "???" and be sure you can explain what EVERY line of code does and why it's necessary.
 
 ```{r}
 #| eval: FALSE
@@ -418,15 +406,13 @@ ggplot(pop3, aes(x = Area, y = Estimate2025)) +
   ggrepel::geom_label_repel(data = pop3, aes(label = Estimate2025))
 ```
 
+2.  In 12_maps.qmd we will see how to create an interactive U.S. map showing population densities by state. Right now, let's see if we can use our new web scraping skills to scrape the correct population density data and create a tidy data frame!
 
-2. In 12_maps.qmd we will see how to create an interactive U.S. map showing population densities by state.  Right now, let's see if we can use our new web scraping skills to scrape the correct population density data and create a tidy data frame!
+A quick wikipedia search yields [this webpage](https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States_by_population_density) with population densities in a nice table format. Use our 4 steps to `rvest`ing data to acquire the data, and then create a tidy tibble with one row per state.
 
-A quick wikipedia search yields [this webpage](https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States_by_population_density) with population densities in a nice table format.  Use our 4 steps to `rvest`ing data to acquire the data, and then create a tidy tibble with one row per state.
+3.  We would like to create a tibble with 4 years of data (2001-2004) from the Minnesota Wild hockey team. Specifically, we are interested in the "Standard Stats" table from [this webpage](https://www.hockey-reference.com/teams/MIN/2001.html) and the similar webpages from 2002, 2003, and 2004. Your final tibble should have 6 columns: player, year, age, pos (position), gp (games played), and pts (points).
 
-
-3. We would like to create a tibble with 4 years of data (2001-2004) from the Minnesota Wild hockey team.  Specifically, we are interested in the "Standard Stats" table from [this webpage](https://www.hockey-reference.com/teams/MIN/2001.html) and the similar webpages from 2002, 2003, and 2004.  Your final tibble should have 6 columns:  player, year, age, pos (position), gp (games played), and pts (points).
-
-You should (a) write a function called `hockey_stats` with inputs for team and year to scrape data from the "Standard Stats" Regular Season table, and (b) use iteration techniques to scrape and combine 4 years worth of data.  Here are some functions you might consider:
+You should (a) write a function called `hockey_stats` with inputs for team and year to scrape data from the "Standard Stats" Regular Season table, and (b) use iteration techniques to scrape and combine 4 years worth of data. Here are some functions you might consider:
 
 - `row_to_names(row_number = 1)` from the `janitor` package
 - `clean_names()` also from the `janitor` package
@@ -436,13 +422,13 @@ You should (a) write a function called `hockey_stats` with inputs for team and y
 
 Try following these steps:
 
-1) Be sure you can find and clean the correct table from the 2001 season.
+1)  Be sure you can find and clean the correct table from the 2001 season.
 
-2) Organize your `rvest` code from (1) into functions from the `polite` package.
+2)  Organize your `rvest` code from (1) into functions from the `polite` package.
 
-3) Place the code from (2) into a function where the user can input a team and year.  You would then adjust the url accordingly and produce a clean table for the user.
+3)  Place the code from (2) into a function where the user can input a team and year. You would then adjust the url accordingly and produce a clean table for the user.
 
-4) Use `map2` and `list_rbind` to build one data set containing Minnesota Wild data from 2001-2004.
+4)  Use `map2` and `list_rbind` to build one data set containing Minnesota Wild data from 2001-2004.
 
 ```{r}
 hockey_data <- read_html("https://www.hockey-reference.com/teams/MIN/2001.html")
@@ -480,4 +466,3 @@ hockey_stuff <- function(team, years) {
 view(hockey_stuff("MIN", c("2001","2002","2003","2004")))
 view(hockey_stuff("CAR", c("2000","2001","2002")))
 ```
-
