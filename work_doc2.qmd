@@ -148,8 +148,9 @@ stop_for_status(apps_list_resp)
 top_sellers <- steam_data$top_sellers$items
 head(top_sellers)
 ```
-
+### APP ID TIBBLE
 ```{r}
+# APP ID TIBBLE!!!!
 all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
                query = list(
                  key = steam_api_key,
