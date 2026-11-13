@@ -22,6 +22,7 @@ release: Release date of the game, YYYY-MM-DD format
 metacritic: Metacritic score the game received
 description: Short description of the game
 
+Our means of data acquisition were ethical and friendly. All of the data we acquired from Steam is public information that anyone can find, such as price, game title, release date, by going to Steam's online web store, which is linked above. In our data acquisition, we looped through 1000 unique App Ids, however, Steam has a limit of 200 requests every 5 minutes, so we included the line `Sys.sleep(1.5)` in our code to accommodate this limit. We also ran the `paths_allowed()` function with the Steam Web API and SteamSpy API, and both outputs returned true.
 ```{r}
 #| include: FALSE
 
@@ -37,41 +38,10 @@ library(curl)
 library(tibble)
 ```
 
-https://github.com/toddmotto/public-apis
-
 ```{r}
-# Alex's API Key & ID
-steam_api_key_alex <- Sys.getenv("6431787D94B64F0CB998C43BA9E66C54")
-
-# Alex's Steam account ID
-steam_id <- "76561199875296546" #Steam id
-```
-
-```{r}
-# Adam's API Key & ID
-steam_api_key <- Sys.getenv("")
-steam_id <- 
-```
-
-```{r}
-# Finds the current number of players in the games listed in appids
-#get_player_count <- function(appid) {
-#  r <- GET(
-#    "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/",
-#    query = list(appid = appid)
-#  )
-#  stop_for_status(r)
-#  fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
-#}
-
-#counts <- tibble(appid = appid) |>
-#  mutate(players = sapply(appid, function(id) {
-#    Sys.sleep(1)
-#    get_player_count(id)
-#  }))
-
-#count
-
+# Check if we are allowed to visit these web addresses to scrape our data.
+robotstxt::paths_allowed("https://store.steampowered.com/api/appdetails")
+robotstxt::paths_allowed("https://steamspy.com/api.php")
 
 # Gets details about a game based on its App ID
 get_store_details <- function(appid, currency = "us", language = "english") {
@@ -168,18 +138,39 @@ final_df <- big_dataset |>
 write_csv(final_df, "mp2_final_df.csv")
 ```
 
-Variables Included in Final Data Set:
+```{r}
+# Alex's API Key & ID
+steam_api_key_alex <- Sys.getenv("6431787D94B64F0CB998C43BA9E66C54")
 
-app_id: The unique code to represent a game on Steam
-name: Title of game
-price: Price of the game, in USD (0.00 means free)
-developer: Developer and creator of the game
-publisher: Publisher of the game
-avg_playtime_forever: The average time an owner of the game has played it. Calculated by taking the total playtime of the game across all owners and dividing by the total number of owners.
-avg_playtime_2weeks: The average time an owner of the game has played it in the last two weeks. Calculated by taking the total playtime of the game across all owners during the last two weeks and dividing by the total number of owners.
-release: Release date of the game, YYYY-MM-DD format
-metacritic: Metacritic score the game received
-description: Short description of the game
+# Alex's Steam account ID
+steam_id <- "76561199875296546" #Steam id
+```
+
+```{r}
+# Adam's API Key & ID
+steam_api_key <- Sys.getenv("")
+steam_id <- 
+```
+
+```{r}
+# Finds the current number of players in the games listed in appids
+#get_player_count <- function(appid) {
+#  r <- GET(
+#    "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/",
+#    query = list(appid = appid)
+#  )
+#  stop_for_status(r)
+#  fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
+#}
+
+#counts <- tibble(appid = appid) |>
+#  mutate(players = sapply(appid, function(id) {
+#    Sys.sleep(1)
+#    get_player_count(id)
+#  }))
+
+#count
+```
 
 
 ```{r}
