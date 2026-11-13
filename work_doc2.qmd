@@ -21,12 +21,15 @@ library(curl)
 library(tibble)
 ```
 
+<<<<<<< HEAD
 https://github.com/toddmotto/public-apis
 
+=======
+>>>>>>> 8fd10159226de0ea7c93ddb6ea1f28a07c584854
 ```{r}
 # Alex's API Key & ID
 steam_api_key <- "6431787D94B64F0CB998C43BA9E66C54"
-"6431787D94B64F0CB998C43BA9E66C54" #API Key
+
 steam_id <- "76561199875296546" #Steam id
 ```
 
@@ -37,49 +40,26 @@ steam_id <-
 ```
 
 ```{r}
-response <- GET(
-  "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/",
-  query = list(
-    key = steam_api_key,
-    steamids = steam_id,
-    include_appinfo = 1,
-    format = "json"
-  )
-)
-stop_for_status(response)
-response
-
-json_text <- content(response, "text", encoding = "UTF-8")
-
-json_text
-
-raw_data <- fromJSON(json_text, flatten = TRUE)
-```
-
-```{r}
-# List of Games to grab
-appids <- c(730, 570, 440) #(CS2, Dota 2, Team Fortress 2)
-
 # Finds the current number of players in the games listed in appids
-get_player_count <- function(appid) {
-  r <- GET(
-    "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/",
-    query = list(appid = appid)
-  )
-  stop_for_status(r)
-  fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
-}
+#get_player_count <- function(appid) {
+#  r <- GET(
+#    "https://api.steampowered.com/ISteamUserStats/GetNumberOfCurrentPlayers/v1/",
+#    query = list(appid = appid)
+#  )
+#  stop_for_status(r)
+#  fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
+#}
 
-counts <- tibble(appid = appids) |>
-  mutate(players = sapply(appid, function(id) {
-    Sys.sleep(1)
-    get_player_count(id)
-  }))
+#counts <- tibble(appid = appid) |>
+#  mutate(players = sapply(appid, function(id) {
+#    Sys.sleep(1)
+#    get_player_count(id)
+#  }))
 
-count
-```
+#count
 
-```{r}
+
+# Gets details about the game
 get_store_details <- function(appid, currency = "us", language = "english") {
     url <- "https://store.steampowered.com/api/appdetails"
     resp <- GET(
@@ -94,22 +74,86 @@ get_store_details <- function(appid, currency = "us", language = "english") {
     data
 }
 
+get_store_details(1222670)
 get_store_details(4435490)$`4435490`$data$price_overview$final_formatted
+<<<<<<< HEAD
+=======
+
+
+# Uses Steamspy to grab the 100 most played games on Steam
+get_steamspy <- function(request) {
+  resp <- GET("https://steamspy.com/api.php",
+  query = list(
+    request = request
+    )
+  )
+  stop_for_status(resp)
+  games <- fromJSON(content(resp, "text", encoding = "UTF-8"))
+  rows <- lapply(games, function(x) {
+    tibble(appid = as.character(x$appid),
+           name = x$name,
+           price = (as.double(x$price))/100, 
+           developer = x$developer,
+           publisher = x$publisher,
+           avg_playtime_forever = x$average_forever,
+           avg_playtime_2weeks = x$average_2weeks,
+           num_players = x$ccu)
+  })
+  steam_tib <- bind_rows(rows)
+  steam_tib
+}
+
+top_forever <- get_steamspy("top100forever")
+top_current <- get_steamspy("top100in2weeks")
+top_owned <- get_steamspy("top100owned")
+
+top_games_df <- bind_rows(top_forever, top_current) |>
+  distinct(appid, .keep_all = TRUE)
+
+all_top_games <- bind_rows(top_games_df, top_owned) |>
+  distinct(appid, .keep_all = TRUE) |>
+  rename("app_id" = "appid")
+
+# List of app ids to usse
+app_id_list <- as.list(final_df$app_id)
+
+
+# Empty tibble to add data to
+game_data <- tibble(app_id = character(),
+                    release = as.Date(character()),
+                    metacritic = character(),
+                    description = character()
+                    )
+
+# For loop to grab game data from each game in the app id list
+for (temp_app_id in app_id_list_big) {
+    Sys.sleep(1.5)
+    temp_store_data = get_store_details(temp_app_id)
+    game_data <- add_row(game_data,
+            app_id = as.character(temp_store_data[[as.character(temp_app_id)]]$data$steam_appid),
+            release = mdy(temp_store_data[[as.character(temp_app_id)]]$data$release_date$date),
+            metacritic = as.character(temp_store_data[[as.character(temp_app_id)]]$data$metacritic$score),
+            description = as.character(temp_store_data[[as.character(temp_app_id)]]$data$short_description)
+           )
+}
+game_data
+
+# Final tibble
+final_df <- big_dataset |>
+  left_join(game_data, by = "app_id")
+
+write_csv(final_df, "mp2_final_df.csv")
+>>>>>>> 8fd10159226de0ea7c93ddb6ea1f28a07c584854
 ```
+
 
 ```{r}
-games <- c("4435490")
-
-steam <- tibble(
-  Code = character(),
-  Title = character(),
-  Rated = character(),
-  Genre = character(),
-  Publisher = character(),
-  
-)
+big_dataset <- get_steamspy("all") |>
+  rename("app_id" = "appid")
+app_id_list_big <- as.list(big_dataset$app_id)
 ```
 
+<<<<<<< HEAD
 ```{r}
 robotstxt::paths_allowed("https://steamdb.info/app/227300/")
 
@@ -147,6 +191,8 @@ top_sellers <- steam_data$top_sellers$items
 head(top_sellers)
 ```
 
+=======
+>>>>>>> 8fd10159226de0ea7c93ddb6ea1f28a07c584854
 ### APP ID TIBBLE
 
 ```{r}
@@ -157,12 +203,13 @@ all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
                  include_games = TRUE,
                  include_dlc = FALSE,
                  include_software = FALSE,
-                 max_result = 50000
+                 max_result = 200
                )
               )
 stop_for_status(all_ids)
 apps_codes <- fromJSON(content(all_ids, "text", encoding = "UTF-8"))
 
+<<<<<<< HEAD
 steam_apps <- bind_rows(apps_codes)
 ```
 
@@ -465,4 +512,11 @@ hockey_stuff <- function(team, years) {
 }
 view(hockey_stuff("MIN", c("2001","2002","2003","2004")))
 view(hockey_stuff("CAR", c("2000","2001","2002")))
+
+# Create the tibble from all of the app ids
+steam_apps <- as_tibble(apps_codes$response$apps) |>
+  select(appid, name) |>
+  head(n = 200)
+
+app_id_list <- as.list(steam_apps)[[1]]
 ```
