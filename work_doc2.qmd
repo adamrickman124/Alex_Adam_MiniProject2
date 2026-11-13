@@ -96,8 +96,7 @@ get_steamspy <- function(request) {
            developer = x$developer,
            publisher = x$publisher,
            avg_playtime_forever = x$average_forever,
-           avg_playtime_2weeks = x$average_2weeks,
-           num_players = x$ccu)
+           avg_playtime_2weeks = x$average_2weeks)
   })
   steam_tib <- bind_rows(rows)
   steam_tib
