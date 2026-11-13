@@ -152,6 +152,19 @@ final_df <- big_dataset |>
 write_csv(final_df, "mp2_final_df.csv")
 ```
 
+Variables Included in Final Data Set:
+
+app_id: The unique code to represent a game on Steam
+name: Title of game
+price: Price of the game, in USD (0.00 means free)
+developer: Developer and creator of the game
+publisher: Publisher of the game
+avg_playtime_forever: The average time an owner of the game has played it. Calculated by taking the total playtime of the game across all owners and dividing by the total number of owners.
+avg_playtime_2weeks: The average time an owner of the game has played it in the last two weeks. Calculated by taking the total playtime of the game across all owners during the last two weeks and dividing by the total number of owners.
+release: Release date of the game, YYYY-MM-DD format
+metacritic: Metacritic score the game received
+description: Short description of the game
+
 
 ```{r}
 robotstxt::paths_allowed("https://steamdb.info/app/227300/")
