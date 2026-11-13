@@ -143,10 +143,6 @@ truck_data
 apps_list_resp <- GET("https://api.steampowered.com/ISteamApps/GetAppList/v2/")
 stop_for_status(apps_list_resp)
     data <- fromJSON(content(apps_list_resp, "text", encoding = "UTF-8"))
-    
-# Extract the Top Sellers data frame directly
-top_sellers <- steam_data$top_sellers$items
-head(top_sellers)
 ```
 ### APP ID TIBBLE
 ```{r}
@@ -157,13 +153,40 @@ all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
                  include_games = TRUE,
                  include_dlc = FALSE,
                  include_software = FALSE,
-                 max_result = 50000
+                 max_result = 10000
                )
               )
 stop_for_status(all_ids)
 apps_codes <- fromJSON(content(all_ids, "text", encoding = "UTF-8"))
 
-steam_apps <- bind_rows(apps_codes)
+# Create the tibble from all of the app ids
+steam_apps <- as_tibble(apps_codes$response$apps) |>
+  select(appid, name)
+
+app_id_list <- as.list(steam_apps)[[1]]
+```
+
+```{r}
+game_data <- tibble(name = character(),
+                    app_id = character(),
+                    description = character(),
+                    developers = character(),
+                    publishers = character(),
+                    price_usd = numeric(),
+                    release = as.Date(character()),
+                    esrb_rating = character()
+                    )
+
+app_vec = c("4435490", "960090", "632360", "1229490", "413150", "620", "2679460") # for some reason, only specific games from this list appear in the final game_data
+# the first, third, fifth, and seventh games appear, which makes me wonder if the for loop is cycling through games too fast, and if a buffer should be added.
+
+#UPDATE: It wasn't the buffer - tested with Sys.sleep and the same games are appearing
+
+for (i in app_id_list) {
+    store_data = get_store_details(i)
+    game_data[i,1] <- store_data$`i`$data$name
+}
+game_data
 ```
 
 
