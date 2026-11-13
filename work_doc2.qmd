@@ -17,11 +17,11 @@ library(rvest)
 library(curl)
 library(tibble)
 ```
-https://github.com/toddmotto/public-apis
+
 ```{r}
 # Alex's API Key & ID
 steam_api_key <- "6431787D94B64F0CB998C43BA9E66C54"
-"6431787D94B64F0CB998C43BA9E66C54" #API Key
+
 steam_id <- "76561199875296546" #Steam id
 ```
 
@@ -32,29 +32,6 @@ steam_id <-
 ```
 
 ```{r}
-response <- GET(
-  "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/",
-  query = list(
-    key = steam_api_key,
-    steamids = steam_id,
-    include_appinfo = 1,
-    format = "json"
-  )
-)
-stop_for_status(response)
-response
-
-json_text <- content(response, "text", encoding = "UTF-8")
-
-json_text
-
-raw_data <- fromJSON(json_text, flatten = TRUE)
-```
-
-```{r}
-# List of Games to grab
-appids <- c(730, 570, 440) #(CS2, Dota 2, Team Fortress 2)
-
 # Finds the current number of players in the games listed in appids
 get_player_count <- function(appid) {
   r <- GET(
@@ -65,16 +42,16 @@ get_player_count <- function(appid) {
   fromJSON(content(r, "text", encoding = "UTF-8"))$response$player_count
 }
 
-counts <- tibble(appid = appids) |>
+counts <- tibble(appid = ap) |>
   mutate(players = sapply(appid, function(id) {
     Sys.sleep(1)
     get_player_count(id)
   }))
 
 count
-```
 
-```{r}
+
+# Gets details about the game
 get_store_details <- function(appid, currency = "us", language = "english") {
     url <- "https://store.steampowered.com/api/appdetails"
     resp <- GET(
@@ -89,61 +66,79 @@ get_store_details <- function(appid, currency = "us", language = "english") {
     data
 }
 
+get_store_details(1222670)
 get_store_details(4435490)$`4435490`$data$price_overview$final_formatted
 
 
+# Uses Steamspy to grab the 100 most played games on Steam
+get_steamspy <- function(request) {
+  resp <- GET("https://steamspy.com/api.php",
+  query = list(
+    request = request
+    )
+  )
+  stop_for_status(resp)
+  games <- fromJSON(content(resp, "text", encoding = "UTF-8"))
+  rows <- lapply(games, function(x) {
+    tibble(appid = as.character(x$appid),
+           name = x$name,
+           price = (as.double(x$price))/100, 
+           developer = x$developer,
+           publisher = x$publisher,
+           avg_playtime_forever = x$average_forever,
+           avg_playtime_2weeks = x$average_2weeks)
+  })
+  steam_tib <- bind_rows(rows)
+  steam_tib
+}
 
-details <- content(coco, "parse")   
-details                         # get a list of 25 pieces of information
-details$Year                    # how to access details
-details[[2]]                    # since a list, another way to access
+top_forever <- get_steamspy("top100forever")
+top_current <- get_steamspy("top100in2weeks")
+top_owned <- get_steamspy("top100owned")
+
+final_df <- bind_rows(top_forever, top_current) |>
+  distinct(appid, .keep_all = TRUE)
+
+final_df <- bind_rows(final_df, top_owned) |>
+  distinct(appid, .keep_all = TRUE) |>
+  rename("app_id" = "appid")
+
+# List of app ids to usse
+app_id_list <- as.list(final_df$app_id)
+
+
+# Empty tibble to add data to
+game_data <- tibble(app_id = character(),
+                    release = as.Date(character()),
+                    metacritic = character(),
+                    description = character()
+                    )
+
+# For loop to grab game data from each game in the app id list
+for (temp_app_id in app_id_list_big) {
+    Sys.sleep(1.5)
+    temp_store_data = get_store_details(temp_app_id)
+    game_data <- add_row(game_data,
+            app_id = as.character(temp_store_data[[as.character(temp_app_id)]]$data$steam_appid),
+            release = mdy(temp_store_data[[as.character(temp_app_id)]]$data$release_date$date),
+            metacritic = as.character(temp_store_data[[as.character(temp_app_id)]]$data$metacritic$score),
+            description = as.character(temp_store_data[[as.character(temp_app_id)]]$data$short_description)
+           )
+}
+game_data
+
+# Final tibble
+final_df <- final_df |>
+  left_join(game_data, by = "app_id")
 ```
+
 
 ```{r}
-games <- c("4435490")
-
-steam <- tibble(
-  Code = character(),
-  Title = character(),
-  Rated = character(),
-  Genre = character(),
-  Publisher = character(),
-  
-)
+big_dataset <- get_steamspy("all") |>
+  rename("app_id" = "appid")
+app_id_list_big <- as.list(big_dataset$app_id)
 ```
 
-```{r}
-robotstxt::paths_allowed("https://steamdb.info/app/227300/")
-
-
-# Step 1: read_html()
-options(url.method = "libcurl")
-euro_truck_sim <- rvest::read_html_live("https://steamdb.info/app/227300/")
-euro_truck_sim
-
-# Start the live session
-sess <- read_html_live("https://steamdb.info/app/227300/")
-
-# Open the browser view to see what the scraper sees
-sess$view()
-
-# 2: html_nodes()
-table_truck <- euro_truck_sim |>
-  html_element("table") |>
-  html_table()
-
-table_truck  # have to guesstimate which table contains climate info
-
-html_table(tables, header = TRUE, fill = TRUE)    # find the right table
-truck_data <- html_table(tables, header = TRUE, fill = TRUE)[1] 
-truck_data
-
-
-# Steam's public JSON endpoint for featured/top-selling categories
-apps_list_resp <- GET("https://api.steampowered.com/ISteamApps/GetAppList/v2/")
-stop_for_status(apps_list_resp)
-    data <- fromJSON(content(apps_list_resp, "text", encoding = "UTF-8"))
-```
 ### APP ID TIBBLE
 ```{r}
 # APP ID TIBBLE!!!!
@@ -153,7 +148,7 @@ all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
                  include_games = TRUE,
                  include_dlc = FALSE,
                  include_software = FALSE,
-                 max_result = 10000
+                 max_result = 200
                )
               )
 stop_for_status(all_ids)
@@ -161,346 +156,8 @@ apps_codes <- fromJSON(content(all_ids, "text", encoding = "UTF-8"))
 
 # Create the tibble from all of the app ids
 steam_apps <- as_tibble(apps_codes$response$apps) |>
-  select(appid, name)
+  select(appid, name) |>
+  head(n = 200)
 
 app_id_list <- as.list(steam_apps)[[1]]
 ```
-
-```{r}
-game_data <- tibble(name = character(),
-                    app_id = character(),
-                    description = character(),
-                    developers = character(),
-                    publishers = character(),
-                    price_usd = numeric(),
-                    release = as.Date(character()),
-                    esrb_rating = character()
-                    )
-
-app_vec = c("4435490", "960090", "632360", "1229490", "413150", "620", "2679460") # for some reason, only specific games from this list appear in the final game_data
-# the first, third, fifth, and seventh games appear, which makes me wonder if the for loop is cycling through games too fast, and if a buffer should be added.
-
-#UPDATE: It wasn't the buffer - tested with Sys.sleep and the same games are appearing
-
-for (i in app_id_list) {
-    store_data = get_store_details(i)
-    game_data[i,1] <- store_data$`i`$data$name
-}
-game_data
-```
-
-
-```{r}
-#| eval: FALSE
-
-# Create a vector of 5 movie names you want to study
-#  - must figure out pattern in URL for obtaining different movies
-movies <- c("Obsession", "La+La+Land", "The+Shawshank+Redemption", "The+Princess+and+the+Frog", "Tarzan")
-
-# Set up empty tibble
-omdb <- tibble(
-  Title = character(), 
-  Rated = character(), 
-  Genre = character(),
-  Actors = character(), 
-  Metascore = double(), 
-  imdbRating = double(),
-  BoxOffice = double()
-)
-
-# Use for loop to run through API request process 5 times,
-#   each time filling the next row in the tibble
-#  - can do max of 1000 GETs per day
-for(i in 1:5) {
-  url <- str_c("http://www.omdbapi.com/?t=", movies[i], "&apikey=", omdb_api_key)
-  Sys.sleep(0.5)
-  onemovie <- GET(url)
-  details <- content(onemovie, "parse")
-  omdb[i,1] <- details$Title
-  omdb[i,2] <- details$Rated  # rating
-  omdb[i,3] <- details$Genre  # genres (single string - could be more than one)
-  omdb[i,4] <- details$Actors  # actors (single string - could be more than one)
-  omdb[i,5] <- parse_number(details$Metascore)  # metascore (be sure it is numeric)
-  omdb[i,6] <- parse_number(details$imdbRating)  # imdb rating (be sure it is numeric)
-  omdb[i,7] <- parse_number(details$BoxOffice)  # box office (be sure it is numeric)
-}
-
-omdb
-
-#  could use stringr functions to further organize this data - separate 
-#    different genres, different actors, etc.  But don't need to now.
-```
-
-
-## National Park data
-
-A SDS 264 final project by Mary Wu and Jenna Graff started with a small data set on 56 national parks from [kaggle](https://www.kaggle.com/datasets/nationalparkservice/park-biodiversity), and supplemented with columns for the park address (a single column including address, city, state, and zip code) and a list of available activities (a single character column with activities separated by commas) that they acquired using APIs from the park websites themselves.
-
-Initial instructions:
-
-- Request API [here](https://www.nps.gov/subjects/developer/get-started.htm)
-- Check out [API guide](https://www.nps.gov/subjects/developer/guides.htm)
-
-```{r}
-# Load in your API key
-# nps_api_key <- readLines("~/264_fall_2026/DS2_preview_work/nps_api_key.txt")
-
-# Alternatively, load your NPS API key using:
-nps_api_key <- Sys.getenv("NPS_KEY")
-
-# Read in park codes from Kaggle
-np_kaggle <- read_csv("Data/parks.csv")
-park_code <- np_kaggle$`Park Code` 
-```
-
-Notice how far we have to drill down to find addresses and activities!
-
-
-```{r}
-#| eval: FALSE
-
-# Try grabbing elements for one park
-url1 <- str_c("https://developer.nps.gov/api/v1/parks?parkCode="
-                , park_code[1], "&api_key=", nps_api_key)
-one_park <- GET(url1)
-details <- content(one_park, "parse")  
-# check out what's available
-str(details)   
-details$data[[1]]
-
-parks_address <- str_c(
-  details$data[[1]]$addresses[[1]]$line1, " ",
-  details$data[[1]]$addresses[[1]]$line3, " ",
-  details$data[[1]]$addresses[[1]]$line2, " ",
-  details$data[[1]]$addresses[[1]]$city, " ",
-  details$data[[1]]$addresses[[1]]$stateCode, ", " ,
-  details$data[[1]]$addresses[[1]]$postalCode
-)
-
-park_activities <- details$data[[1]]$activities[[1]]$name
-for (j in 2:length(details$data[[1]]$activities)) {
-  park_activities <- str_c(park_activities, ", ",
-                         details$data[[1]]$activities[[j]]$name)
-}
-```
-
-You can download this .qmd file from [here](https://github.com/proback/264_fall_2026/blob/main/09_table_scraping.qmd).  Just hit the Download Raw File button.
-
-
-```{r}
-#| include: FALSE
-
-library(tidyverse)
-library(rvest)
-library(polite)
-```
-
-
-# Using rvest for web scraping
-
-If you would like to assemble data from a website with no dedicated user interface (like an API which we'll see later), you can often acquire it using brute force methods commonly called web scraping.  Typically, this involves finding content inside HTML (Hypertext markup language) code used for creating webpages and web applications and the CSS (Cascading style sheets) language for customizing the appearance of webpages. 
-We are used to reading data from .csv files.... but most websites have it stored in XML (like html, but for data). You can read more about it here if you're interested: https://www.w3schools.com/xml/default.asp
-
-XML has a sort of tree or graph-like structure... so we can identify information by which `node` it belongs to (`html_nodes`) and then convert the content into something we can use in R (`html_text` or `html_table`).
-
-
-Here's one quick example of web scraping.  First check out the webpage https://www.cheese.com/by_type and then select Semi-Soft.  We can drill into the html code for this webpage and find and store specific information (like cheese names)
-
-```{r}
-session <- bow("https://www.cheese.com/by_type", force = TRUE)
-result <- scrape(session, query = list(t = "semi-soft", per_page = 100)) |>
-  html_node("#main-body") |> 
-  html_nodes("h3") |> 
-  html_text()
-head(result)
-#[1] "American Cheese"     "Mozzarella"          "Taleggio"           
-#[4] "Fontina Val d'Aosta" "Blue Cheese"         "Jarlsberg"   
-```
-
-
-## Four steps to scraping data with functions in the `rvest` library:
-
-0. `robotstxt::paths_allowed()` Check if the website allows scraping, and then make sure we scrape "politely"
-1. `read_html()`.  Input the URL containing the data and turn the html code into an XML file (another markup format that's easier to work with).
-2. `html_nodes()`.  Extract specific nodes from the XML file by using the CSS path that leads to the content of interest. (use css="table" for tables.)
-3. `html_text()`.  Extract content of interest from nodes.  Might also use `html_table()` etc.
-
-
-## Data scraping ethics
-
-Before scraping, we should always check first whether the website allows scraping.  We should also consider if there's any personal or confidential information, and we should be considerate to not overload the server we're scraping from.
-
-[Chapter 24 in R4DS](https://r4ds.hadley.nz/webscraping#scraping-ethics-and-legalities) provides a nice overview of some of the important issues to consider.  A couple of highlights:
-
-- be aware of terms of service, and, if available, the `robots.txt` file that some websites will publish to clarify what can and cannot be scraped and other constraints about scraping.
-- use the [`polite` package](https://github.com/dmi3kno/polite) to scrape public, non-personal, and factual data in a respectful manner
-- scrape with a good purpose and request only what you need; in particular, be extremely wary of personally identifiable information
-
-See [this article](https://towardsdatascience.com/ethics-in-web-scraping-b96b18136f01) for more perspective on the ethics of data scraping.
-
-
-## When the data is already in table form:
-
-In this example, we will scrape climate data from [this website](https://www.usclimatedata.com/climate/minneapolis/minnesota/united-states/usmn0503)
-
-The website already contains data in table form, so we use `html_nodes(. , css = "table")` and `html_table()`
-
-```{r}
-# check that scraping is allowed (Step 0)
-robotstxt::paths_allowed("https://www.usclimatedata.com/climate/minneapolis/minnesota/united-states/usmn0503")
-
-
-
-# Step 1: read_html()
-mpls <- read_html("https://www.usclimatedata.com/climate/minneapolis/minnesota/united-states/usmn0503")
-
-# 2: html_nodes()
-tables <- html_nodes(mpls, css = "table") 
-tables  # have to guesstimate which table contains climate info
-
-# 3: html_table()
-html_table(tables, header = TRUE, fill = TRUE)    # find the right table
-mpls_data <- html_table(tables, header = TRUE, fill = TRUE)[[1]]  
-mpls_data
-```
-
-Now we wrap the 4 steps above into the `bow` and `scrape` functions from the `polite` package:
-
-```{r}
-session <- bow("https://www.usclimatedata.com/climate/minneapolis/minnesota/united-states/usmn0503", force = TRUE)
-
-result <- scrape(session) |>
-  html_nodes(css = "table") |> 
-  html_table(header = TRUE, fill = TRUE)
-mpls_data <- result[[1]]
-
-# clean things up, especially column names
-mpls_data |>
-  rename(
-    avg_high_F = 2,
-    avg_low_F = 3,
-    precip_inch = 4,
-    num_wet_days = 5,
-    sunshine_hrs = 6,
-    snow_inch = 7
-  )
-```
-
-
-
-### On Your Own
-
-1. Use the `rvest` package and `html_table` to read in the table of data found at the link [here](https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population) and create a scatterplot of land area versus the 2025 estimated population.  I give you some starter code below; fill in the "???" and be sure you can explain what EVERY line of code does and why it's necessary.
-
-```{r}
-#| eval: FALSE
-
-city_pop <- read_html("https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population")
-
-pop <- html_nodes(city_pop, css = "table")
-html_table(pop, header = TRUE, fill = TRUE)  # find right table
-pop2 <- html_table(pop, header = TRUE, fill = TRUE)[[3]]
-pop2
-
-# perform the steps above with the polite package
-session <- bow("https://en.wikipedia.org/wiki/List_of_United_States_cities_by_population", force = TRUE)
-
-result <- scrape(session) |>
-  html_nodes(css = "table") |>
-  html_table(header = TRUE, fill = TRUE)
-result
-pop2 <- result[[3]]
-pop2
-
-pop3 <- as_tibble(pop2[,c(1:6,8)]) |>
-  slice(-1) |>
-  rename(`City` = `Municipality`,
-         `State` = `ST`,
-         `Estimate2025` = `2025estimate`,
-         `Census` = `2020census`,
-         `Area` = `2020 land area`,
-         `Density` = `2020 density`) |>
-  mutate(Estimate2025 = parse_number(Estimate2025),
-         Census = parse_number(Census),
-         #Change = ???   # get rid of % but preserve +/- (optional),
-         Area = parse_number(Area),
-         Density = parse_number(Density)) |> 
-  mutate(City = str_replace(City, "\\[.*$", ""))
-pop3
-
-# pick out unusual points
-outliers <- pop3 |> 
-  filter(Estimate2025 > 4000000 | Area > 550)
-outliers
-
-# This will work if don't turn variables from chr to dbl, but in that 
-#  case notice how axes are just evenly spaced categorical variables
-ggplot(pop3, aes(x = Area, y = Estimate2025)) +
-  geom_point()  +
-  geom_smooth() +
-  ggrepel::geom_label_repel(data = pop3, aes(label = Estimate2025))
-```
-
-
-2. In 12_maps.qmd we will see how to create an interactive U.S. map showing population densities by state.  Right now, let's see if we can use our new web scraping skills to scrape the correct population density data and create a tidy data frame!
-
-A quick wikipedia search yields [this webpage](https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States_by_population_density) with population densities in a nice table format.  Use our 4 steps to `rvest`ing data to acquire the data, and then create a tidy tibble with one row per state.
-
-
-3. We would like to create a tibble with 4 years of data (2001-2004) from the Minnesota Wild hockey team.  Specifically, we are interested in the "Standard Stats" table from [this webpage](https://www.hockey-reference.com/teams/MIN/2001.html) and the similar webpages from 2002, 2003, and 2004.  Your final tibble should have 6 columns:  player, year, age, pos (position), gp (games played), and pts (points).
-
-You should (a) write a function called `hockey_stats` with inputs for team and year to scrape data from the "Standard Stats" Regular Season table, and (b) use iteration techniques to scrape and combine 4 years worth of data.  Here are some functions you might consider:
-
-- `row_to_names(row_number = 1)` from the `janitor` package
-- `clean_names()` also from the `janitor` package
-- `bow()` and `scrape()` from the `polite` package
-- `str_c()` from the `stringr` package (for creating urls with user inputs)
-- `map2()` and `list_rbind()` for iterating and combining years
-
-Try following these steps:
-
-1) Be sure you can find and clean the correct table from the 2001 season.
-
-2) Organize your `rvest` code from (1) into functions from the `polite` package.
-
-3) Place the code from (2) into a function where the user can input a team and year.  You would then adjust the url accordingly and produce a clean table for the user.
-
-4) Use `map2` and `list_rbind` to build one data set containing Minnesota Wild data from 2001-2004.
-
-```{r}
-hockey_data <- read_html("https://www.hockey-reference.com/teams/MIN/2001.html")
-
-data <- html_nodes(hockey_data, css = "table")
-html_table(data, header = TRUE, fill = TRUE)  # find right table
-data2 <- html_table(data, header = TRUE, fill = TRUE)[[3]]
-data2
-
-data2 |>
-  row_to_names(row_number=1) |>
-  clean_names() |>
-  select("player","age", "pos","gp","pts") |>
-  mutate(year = 2001)
-
-hockey_stats <- function(team, year) {
-  hockey_data <- read_html(str_c("https://www.hockey-reference.com/teams/", team, "/", year, ".html"))
-  data <- html_nodes(hockey_data, css = "table")
-  html_table(data, header = TRUE, fill = TRUE)  # find right table
-  data2 <- html_table(data, header = TRUE, fill = TRUE)[[3]]
-  data2 |>
-    row_to_names(row_number=1) |>
-    clean_names() |>
-    select("player","age", "pos","gp","pts") |>
-    mutate(year = year)
-}
-hockey_stats("MIN", "2001") 
-hockey_stats("CAR", "2007")
-
-
-hockey_stuff <- function(team, years) {
-  map2(team, years, hockey_stats) |>
-    list_rbind()
-}
-view(hockey_stuff("MIN", c("2001","2002","2003","2004")))
-view(hockey_stuff("CAR", c("2000","2001","2002")))
-```
-
