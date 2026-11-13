@@ -95,8 +95,11 @@ get_steamspy <- function(request) {
   steam_tib
 }
 
+# Grab game details about 1000 of the most owned games on Steam.
 games_dataset <- get_steamspy("all") |>
   rename("app_id" = "appid")
+
+# Makes a list of just the App IDs from most owned games to use in the for loop to get more game details.
 app_id_list_main <- as.list(games_dataset$app_id)
 
 ---------------------------------------------------------------------------------------------------------------------
