@@ -22,7 +22,7 @@ release: Release date of the game, YYYY-MM-DD format
 metacritic: Metacritic score the game received
 description: Short description of the game
 
-Our means of data acquisition were ethical and friendly. All of the data we acquired from Steam is public information that anyone can find, such as price, game title, release date, by going to Steam's online web store, which is linked above. In our data acquisition, we looped through 1000 unique App Ids, however, Steam has a limit of 200 requests every 5 minutes, so we included the line `Sys.sleep(1.5)` in our code to accommodate this limit. We also ran the `paths_allowed()` function with the Steam Web API and SteamSpy API, and both outputs returned true.
+Our means of data acquisition were ethical and friendly. All of the data we acquired from Steam is public information that anyone can find, such as price, game title, release date, by going to Steam's online web store, which is linked above. In our data acquisition, we looped through 1000 unique App Ids, however, Steam has a limit of 200 requests every 5 minutes, so we included the line `Sys.sleep(1.5)` in our code to accommodate this limit. SteamSpy asks that you limit requests to one per second, which was not a problem for our use of it since we only called it once to get the game details we needed. 
 ```{r}
 #| include: FALSE
 
@@ -39,10 +39,6 @@ library(tibble)
 ```
 
 ```{r}
-# Check if we are allowed to visit these web addresses to scrape our data.
-robotstxt::paths_allowed("https://store.steampowered.com/api/appdetails")
-robotstxt::paths_allowed("https://steamspy.com/api.php")
-
 # Gets details about a game based on its App ID
 get_store_details <- function(appid, currency = "us", language = "english") {
     url <- "https://store.steampowered.com/api/appdetails" # Endpoint url
