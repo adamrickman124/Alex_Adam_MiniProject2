@@ -15,11 +15,12 @@ library(jsonlite)
 library(xml2)
 library(rvest)
 library(curl)
+library(tibble)
 ```
 https://github.com/toddmotto/public-apis
 ```{r}
 # Alex's API Key & ID
-steam_api_key <- Sys.getenv("6431787D94B64F0CB998C43BA9E66C54")
+steam_api_key <- "6431787D94B64F0CB998C43BA9E66C54"
 "6431787D94B64F0CB998C43BA9E66C54" #API Key
 steam_id <- "76561199875296546" #Steam id
 ```
@@ -139,15 +140,33 @@ truck_data
 
 
 # Steam's public JSON endpoint for featured/top-selling categories
-steam_data <- fromJSON("https://steampowered.com")
-
+apps_list_resp <- GET("https://api.steampowered.com/ISteamApps/GetAppList/v2/")
+stop_for_status(apps_list_resp)
+    data <- fromJSON(content(apps_list_resp, "text", encoding = "UTF-8"))
+    
 # Extract the Top Sellers data frame directly
 top_sellers <- steam_data$top_sellers$items
 head(top_sellers)
 ```
 
 ```{r}
-all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/")
+all_ids <- GET("https://api.steampowered.com/IStoreService/GetAppList/v1/",
+               query = list(
+                 key = steam_api_key,
+                 include_games = TRUE,
+                 include_dlc = FALSE,
+                 include_software = FALSE,
+                 max_result = 50000
+               )
+              )
+stop_for_status(all_ids)
+apps_codes <- fromJSON(content(all_ids, "text", encoding = "UTF-8"))
+
+more_results <- isTRUE(apps_codes$response$have_more_results)
+if (more_results) {
+  last_appid <- apps_codes$response$last_appid
+}
+steam_apps <- bind_rows(apps_codes)
 ```
 
 
