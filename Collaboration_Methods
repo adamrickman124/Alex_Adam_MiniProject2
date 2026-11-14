@@ -3,4 +3,5 @@ Then we would push and pull our changes to and from Github, and update each othe
 Generally, Adam worked on the for loop and getting all of the data into a data frame and tidied.
 Alex worked on getting API requests and getting the data received into a format that we could work with.
 Then we combined our data together and collaborated to make sure all of the code worked together.
-We tried to avoid merge conflicts, which is why we created two separate documents for us to work in, and it worked well for avoiding merge conflicts.
+We tried to avoid merge conflicts, which is why we created two separate documents for us to work in, and it worked well for our goal.
+In the future we would consider using branches for collaboration, although currently we are not super comfortable using branches.
