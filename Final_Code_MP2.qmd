@@ -4,26 +4,37 @@ authors: "Adam Rickman and Alex McGohan
 format: html
 editor: visual
 ---
-#SDS264 Mini-Project 2: Steam API
-## Introduction
-For Mini-Project 2, we used APIs to create a data frame that includes details about the 1000 most owned video games on Steam. Steam is the most widely used digital store for PC gaming, with thousands of games available for purchase. [Here is a link](https://store.steampowered.com/) to Steam's online web store, and the URL we used as the endpoint for our API requests is https://store.steampowered.com/api/appdetails. This Steam API sends back details about a game that we must specify by an App ID unique to that game. In addition to the Steam API, we sent API requests to SteamSpy, which is linked [here](https://steamspy.com/). Our API requests were sent to the endpoint https://steamspy.com/api.php. SteamSpy is a third-party website that tracks Steam data, such as player counts and the most owned games. Our use of SteamSpy was for efficiency, as all of the data we obtained could have been gathered from the Steam API, however, after using the Steam API for a litle while, we realized that it is difficult to work with because it is outdated and the documentation is unclear. Each row of our final data frame represents a single video game, and the 10 variables we gathered are described below.
 
-Variables Included in Final Data Set:
+# SDS264 Mini-Project 2:
 
-app_id: The unique code to represent a game on Steam
-name: Title of game
-price: Price of the game, in USD (0.00 means free)
-developer: Developer and creator of the game
-publisher: Publisher of the game
-avg_playtime_forever: The average time an owner of the game has played it. Calculated by taking the total playtime of the game across all owners and dividing by the total number of owners.
-avg_playtime_2weeks: The average time an owner of the game has played it in the last two weeks. Calculated by taking the total playtime of the game across all owners during the last two weeks and dividing by the total number of owners.
-release: Release date of the game, YYYY-MM-DD format
-metacritic: Metacritic score the game received
-description: Short description of the game
+## Steam API
+
+[Introduction]{.underline}
+
+For Mini-Project 2, we used APIs to create a data frame that includes details about the 1000 most owned video games on Steam. Steam is the most widely used digital store for PC gaming, with thousands of games available for purchase. [Here is a link](https://store.steampowered.com/) to Steam's online web store, and the URL we used as the endpoint for our API requests is <https://store.steampowered.com/api/appdetails>. This Steam API sends back details about a game that we must specify by an App ID unique to that game. In addition to the Steam API, we sent API requests to SteamSpy, which is linked [here](https://steamspy.com/). Our API requests were sent to the endpoint <https://steamspy.com/api.php>. SteamSpy is a third-party website that tracks Steam data, such as player counts and the most owned games. Our use of SteamSpy was for efficiency, as all of the data we obtained could have been gathered from the Steam API, however, after using the Steam API for a litlle while, we realized that it is difficult to work with because it is outdated and the documentation is unclear. Each row of our final data frame represents a single video game, and the 10 variables we gathered are described below.
+
+[Variables Included in Final Data Set:]{.underline}
+
+**app_id:** The unique code to represent a game on Steam
+
+**name:** Title of game price: Price of the game, in USD (0.00 means free)
+
+**developer:** Developer and creator of the game
+
+**publisher:** Publisher of the game
+
+**avg_playtime_forever:** The average time an owner of the game has played it. Calculated by taking the total playtime of the game across all owners and dividing by the total number of owners.
+
+**avg_playtime_2weeks:** The average time an owner of the game has played it in the last two weeks. Calculated by taking the total playtime of the game across all owners during the last two weeks and dividing by the total number of owners.
+
+**release:** Release date of the game, YYYY-MM-DD format
+
+**metacritic:** Metacritic score the game received description: Short description of the game
 
 Our means of data acquisition were ethical and friendly. All of the data we acquired from Steam is public information that anyone can find, such as price, game title, release date, by going to Steam's online web store, which is linked above. In our data acquisition, we looped through 1000 unique App Ids, however, Steam has a limit of 200 requests every 5 minutes, so we included the line `Sys.sleep(1.5)` in our code to accommodate this limit. SteamSpy asks that you limit requests to one per second, which was not a problem for our use of it since we only called it once to get the game details we needed. All of the SteamSpy data we gathered is public information as well, which is all available to view on their website. Overall, none of the data we gathered displays an individual's profile data or any personally identifiable information, and we are using the data for academic purposes.
 
 ## Code
+
 ```{r}
 #| include: FALSE
 
