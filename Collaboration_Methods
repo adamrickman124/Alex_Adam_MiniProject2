@@ -5,3 +5,4 @@ Alex worked on getting API requests and getting the data received into a format 
 Then we combined our data together and collaborated to make sure all of the code worked together.
 We tried to avoid merge conflicts, which is why we created two separate documents for us to work in, and it worked well for avoiding most merge conflicts.
 When we did run into merge conflicts, they were not severe, and we were adequately prepared to resolve them.
+In the future we would consider using branches for collaboration, although currently we are not super comfortable using branches.
